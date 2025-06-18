@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Festejando o Campo e a Cidade</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    #sketch-container {
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="sketch-container"></div>
+
+  <script>
+    let sunY;
+    let clouds = [];
+    let buildings = [];
+    let trees = [];
+    let cars = [];
+    let birds = [];
+    let isDay = true;
+    let stars = [];
+    let moon;
+    
+    function setup() {
+      let canvas = createCanvas(800, 500);
+      canvas.parent('sketch-container');
+      
+      sunY = height;
+      
+      // Criar nuvens
+      for (let i = 0; i < 5; i++) {
+        clouds.push({
+          x: random(width),
+          y: random(height * 0.3),
+          speed: random(0.5, 1.5),
+          size: random(50, 100)
+        });
+      }
+      
+      // Criar prédios
+      for (let i = 0; i < 10; i++) {
+        buildings.push({
+          x: random(width * 0.5, width),
+          width: random(40, 80),
+          height: random(100, 250),
+          windows: []
+        });
+        
+        // Adicionar janelas aos prédios
+        for (let j = 0; j < 5; j++) {
+          for (let k = 0; k < 3; k++) {
+            buildings[i].windows.push({
+              x: buildings[i].x + 10 + k * (buildings[i].width - 20) / 3,
+              y: height - buildings[i].height + 20 + j * 30,
+              on: random() > 0.3
+            });
+          }
+        }
+      }
+      
+      // Criar árvores no campo
+      for (let i = 0; i < 8; i++) {
+        trees.push({
+          x: random(width * 0.4),
+          y: height - random(50, 150),
+          trunkHeight: random(40, 80),
+          canopySize: random(50, 100),
+          sway: 0,
+          swayDirection: random([-1, 1])
+        });
+      }
+      
+      // Criar carros
+      for (let i = 0; i < 3; i++) {
+        cars.push({
+          x: random(width),
+          y: height - 20,
+          speed: random(2, 5),
+          color: color(random(100, 255), random(100, 255), random(100, 255))
+        });
+      }
+      
+      // Criar pássaros
+      for (let i = 0; i < 10; i++) {
+        birds.push({
+          x: random(width),
+          y: random(height * 0.4),
+          speed: random(1, 3),
+          wingAngle: 0,
+          wingDirection: 1
+        });
+      }
+      
+      // Criar estrelas
+      for (let i = 0; i < 100; i++) {
+        stars.push({
+          x: random(width),
+          y: random(height * 0.6),
+          size: random(1, 3),
+          twinkle: random(0.5, 1.5)
+        });
+      }
+      
+      // Criar lua
+      moon = {
+        x: width * 0.8,
+        y: height * 0.2,
+        size: 60,
+        phase: 0.7
+      };
+    }
+    
+    function draw() {
+      // Transição dia/noite
+      if (isDay) {
+        sunY -= 0.3;
+        if (sunY < height * 0.2) {
+          isDay = false;
+          sunY = height * 0.2;
+        }
+      } else {
+        sunY += 0.3;
+        if (sunY > height) {
+          isDay = true;
+          sunY = height;
+        }
+      }
+      
+      // Céu gradiente
+      if (isDay) {
+        let daySky1 = color(135, 206, 235);
+        let daySky2 = color(65, 105, 225);
+        for (let y = 0; y < height * 0.6; y++) {
+          let inter = map(y, 0, height * 0.6, 0, 1);
+          let c = lerpColor(daySky1, daySky2, inter);
+          stroke(c);
+          line(0, y, width, y);
+        }
+      } else {
+        let nightSky1 = color(25, 25, 112);
+        let nightSky2 = color(0, 0, 0);
+        for (let y = 0; y < height * 0.6; y++) {
+          let inter = map(y, 0, height * 0.6, 0, 1);
+          let c = lerpColor(nightSky1, nightSky2, inter);
+          stroke(c);
+          line(0, y, width, y);
+        }
+      }
+      
+      // Desenhar estrelas à noite
+      if (!isDay) {
+        for (let star of stars) {
+          let brightness = 255 * abs(sin(frameCount * 0.01 * star.twinkle));
+          fill(brightness);
+          noStroke();
+          ellipse(star.x, star.y, star.size);
+        }
+        
+        // Desenhar lua
+        fill(240, 240, 210);
+        noStroke();
+        arc(moon.x, moon.y, moon.size, moon.size, PI * moon.phase, PI * (2 - moon.phase));
+      }
+      
+      // Desenhar sol
+      if (isDay) {
+        fill(255, 255, 0);
+        noStroke();
+        ellipse(width * 0.2, sunY, 80, 80);
+      }
+      
+      // Atualizar e desenhar nuvens
+      for (let cloud of clouds) {
+        cloud.x += cloud.speed;
+        if (cloud.x > width + cloud.size) {
+          cloud.x = -cloud.size;
+        }
+        
+        fill(255, 255, 255, 200);
+        noStroke();
+        ellipse(cloud.x, cloud.y, cloud.size, cloud.size * 0.6);
+        ellipse(cloud.x + cloud.size * 0.3, cloud.y, cloud.size * 0.8, cloud.size * 0.5);
+        ellipse(cloud.x - cloud.size * 0.3, cloud.y, cloud.size * 0.7, cloud.size * 0.4);
+      }
+      
+      // Desenhar grama (campo)
+      fill(34, 139, 34);
+      noStroke();
+      rect(0, height * 0.6, width * 0.5, height * 0.4);
+      
+      // Desenhar estrada (cidade)
+      fill(105, 105, 105);
+      rect(width * 0.5, height * 0.6, width * 0.5, height * 0.4);
+      
+      // Linhas da estrada
+      fill(255, 255, 0);
+      for (let y = height * 0.6 + 20; y < height; y += 40) {
+        rect(width * 0.5 + 20, y, width * 0.5 - 40, 10);
+      }
+      
+      // Atualizar e desenhar árvores
+      for (let tree of trees) {
+        // Balanço das árvores
+        tree.sway += 0.01 * tree.swayDirection;
+        if (abs(tree.sway) > 0.1) {
+          tree.swayDirection *= -1;
+        }
+        
+        // Tronco
+        fill(139, 69, 19);
+        rect(tree.x, tree.y, 15, tree.trunkHeight);
+        
+        // Copa
+        fill(0, 100, 0);
+        ellipse(tree.x + 7 + tree.sway * 5, tree.y - tree.canopySize * 0.3, tree.canopySize, tree.canopySize);
+      }
+      
+      // Desenhar prédios
+      for (let building of buildings) {
+        fill(70, 70, 70);
+        rect(building.x, height - building.height, building.width, building.height);
+        
+        // Janelas
+        for (let window of building.windows) {
+          if (window.on && !isDay) {
+            fill(255, 255, 100);
+          } else if (window.on && isDay && random() > 0.95) {
+            window.on = false; // Apagar luzes aleatoriamente durante o dia
+          } else if (!window.on && !isDay && random() > 0.99) {
+            window.on = true; // Acender luzes aleatoriamente à noite
+          } else {
+            fill(200, 200, 200);
+          }
+          rect(window.x, window.y, 10, 15);
+        }
+      }
+      
+      // Atualizar e desenhar carros
+      for (let car of cars) {
+        car.x += car.speed;
+        if (car.x > width + 50) {
+          car.x = -50;
+        }
+        
+        fill(car.color);
+        rect(car.x, car.y - 30, 50, 20, 5);
+        rect(car.x + 5, car.y - 40, 40, 10, 3);
+        fill(0);
+        ellipse(car.x + 10, car.y - 10, 15, 15);
+        ellipse(car.x + 40, car.y - 10, 15, 15);
+      }
+      
+      // Atualizar e desenhar pássaros
+      for (let bird of birds) {
+        bird.x += bird.speed;
+        bird.wingAngle += 0.1 * bird.wingDirection;
+        if (abs(bird.wingAngle) > 0.5) {
+          bird.wingDirection *= -1;
+        }
+        
+        if (bird.x > width + 20) {
+          bird.x = -20;
+          bird.y = random(height * 0.4);
+        }
+        
+        fill(0);
+        // Corpo
+        ellipse(bird.x, bird.y, 15, 8);
+        // Cabeça
+        ellipse(bird.x - 10, bird.y - 3, 8, 8);
+        // Bico
+        triangle(bird.x - 14, bird.y - 3, bird.x - 18, bird.y - 1, bird.x - 18, bird.y - 5);
+        // Asas
+        push();
+        translate(bird.x + 5, bird.y);
+        rotate(bird.wingAngle);
+        triangle(0, 0, 15, -15, 15, 15);
+        pop();
+      }
+      
+      // Texto com o tema
+      fill(255);
+      textSize(24);
+      textAlign(CENTER);
+      text("Festejando o Campo e a Cidade", width/2, 30);
+      
+      // Legenda
+      fill(255);
+      textSize(14);
+      text("Dia e noite se alternam mostrando a beleza do campo e da cidade", width/2, 60);
+    }
+  </script>
+</body>
+</html>
